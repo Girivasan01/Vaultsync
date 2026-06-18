@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { login } from '../api/auth.api.js';
 import AuthLayout from '../layouts/AuthLayout.jsx';
 import { useAuthStore } from '../store/auth.store.js';
+import { useOrgStore } from '../store/org.store.js';
+import { clearVaultSyncStorage } from '../store/safeStorage.js';
 import Button from '../components/ui/Button.jsx';
 import { Card } from '../components/ui/Card.jsx';
 
@@ -14,16 +16,34 @@ const schema = z.object({ email: z.string().email(), password: z.string().min(1)
 export default function LoginPage() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
+  const logout = useAuthStore((state) => state.logout);
+  const { setActiveOrg, setActiveEnterprise, clearOrg } = useOrgStore();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(schema) });
 
   const submit = async (values) => {
     try {
+      logout();
+      clearOrg();
+      clearVaultSyncStorage();
       const session = await login(values);
       setSession(session);
+      if (!session.user?.isPlatformAdmin && session.user?.enterprises?.length) {
+        const ent = session.user.enterprises[0];
+        setActiveOrg({ id: ent.orgId, name: ent.orgName });
+        setActiveEnterprise({ id: ent.enterpriseId, name: ent.enterprise });
+      }
       toast.success('Signed in');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Login failed');
+      const message = error.response?.data?.error || 'Login failed';
+      const code = error.response?.data?.code;
+      if (code === 'AUTH_SUBSCRIPTION_EXPIRED') {
+        toast.error('Subscription expired. Please contact Webaac Solutions to renew.');
+      } else if (code === 'AUTH_USER_CORRUPTED') {
+        toast.error('Account data is corrupted. Please contact support.');
+      } else {
+        toast.error(message);
+      }
     }
   };
 

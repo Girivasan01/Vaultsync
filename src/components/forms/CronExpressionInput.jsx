@@ -5,10 +5,10 @@ const presets = [
 ];
 
 function describeCron(value) {
-  if (value === '0 2 * * *') return 'Runs daily at 02:00 UTC';
+  if (value === '0 2 * * *') return 'Runs daily at 02:00 (server local time)';
   if (value === '0 */6 * * *') return 'Runs every six hours';
-  if (value === '0 1 * * 1-5') return 'Runs weekdays at 01:00 UTC';
-  return 'Custom cron expression, evaluated in UTC';
+  if (value === '0 1 * * 1-5') return 'Runs weekdays at 01:00 (server local time)';
+  return 'Custom cron expression, evaluated in server local time';
 }
 
 export default function CronExpressionInput({ value, onChange }) {

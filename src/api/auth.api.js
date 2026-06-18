@@ -13,3 +13,10 @@ export async function getMe() {
   const response = await api.get('/auth/me');
   return response.data.data.user;
 }
+
+export async function getSubscriptionStatus(enterpriseId) {
+  const response = await api.get('/auth/subscription-status', {
+    params: enterpriseId ? { enterpriseId } : undefined,
+  });
+  return response.data.data;
+}

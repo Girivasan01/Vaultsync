@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { createSafePersistStorage } from './safeStorage.js';
 
 export const useAuthStore = create(
   persist(
@@ -12,6 +13,10 @@ export const useAuthStore = create(
       setUser: (user) => set({ user }),
       logout: () => set({ user: null, accessToken: null, refreshToken: null })
     }),
-    { name: 'vaultsync-auth' }
+    {
+      name: 'vaultsync-auth',
+      version: 1,
+      storage: createSafePersistStorage(),
+    }
   )
 );

@@ -6,6 +6,8 @@ import ApplicationsPage from '../pages/ApplicationsPage.jsx';
 import ApplicationDetailPage from '../pages/ApplicationDetailPage.jsx';
 import BackupsPage from '../pages/BackupsPage.jsx';
 import LogsPage from '../pages/LogsPage.jsx';
+import OrgsPage from '../pages/admin/OrgsPage.jsx';
+import EnterprisesPage from '../pages/admin/EnterprisesPage.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
 
 const router = createBrowserRouter([
@@ -21,7 +23,9 @@ const router = createBrowserRouter([
           { path: '/applications', element: <ApplicationsPage /> },
           { path: '/applications/:id', element: <ApplicationDetailPage /> },
           { path: '/backups', element: <BackupsPage /> },
-          { path: '/logs', element: <LogsPage /> }
+          { path: '/logs', element: <LogsPage /> },
+          { path: '/admin/orgs', element: <OrgsPage /> },
+          { path: '/admin/enterprises', element: <EnterprisesPage /> }
         ]
       }
     ]
