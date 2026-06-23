@@ -31,8 +31,10 @@ import Tooltip from "../../components/ui/Tooltip.jsx";
 import { useOrgStore } from "../../store/org.store.js";
 
 const thClass =
-  "px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400";
-const tdClass = "px-3 py-2.5 align-middle text-sm";
+  "whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400";
+const tdClass = "whitespace-nowrap px-4 py-3 align-middle text-sm";
+const actionBtnClass =
+  "!h-8 !min-h-8 !w-8 !min-w-8 !rounded-lg !p-0 !shadow-sm hover:!shadow";
 
 function ExpiryCell({ row }) {
   if (!row.expiry_date)
@@ -381,18 +383,22 @@ export default function EnterprisesPage() {
           <CardTitle>All Enterprises</CardTitle>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="min-w-[960px] w-full border-collapse text-left">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className={`${thClass} w-10`}>ID</th>
-                <th className={`${thClass} w-36`}>Enterprise</th>
-                <th className={`${thClass} w-36`}>Organisation</th>
-                <th className={`${thClass} w-20`}>Status</th>
-                <th className={`${thClass} w-24`}>Start</th>
-                <th className={`${thClass} w-24`}>Expiry</th>
-                <th className={`${thClass} w-24`}>Days Left</th>
-                <th className={`${thClass} w-28`}>Warning</th>
-                <th className={`${thClass} text-center`}>Actions</th>
+                <th className={`${thClass} w-14`}>ID</th>
+                <th className={thClass}>Enterprise</th>
+                <th className={thClass}>Organisation</th>
+                <th className={`${thClass} w-24`}>Status</th>
+                <th className={`${thClass} w-28`}>Start</th>
+                <th className={`${thClass} w-28`}>Expiry</th>
+                <th className={`${thClass} w-28`}>Days Left</th>
+                <th className={`${thClass} w-32`}>Warning</th>
+                <th
+                  className={`${thClass} sticky right-0 z-10 w-[220px] bg-gray-50 text-center dark:bg-gray-900/50`}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -407,20 +413,26 @@ export default function EnterprisesPage() {
                   </td>
                 </tr>
               )}
-              {enterprises.map((ent) => (
+              {enterprises.map((ent, idx) => (
                 <tr
                   key={ent.id}
-                  className="transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-900/30"
+                  className={`transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-900/30 ${
+                    idx % 2 === 1 ? "bg-gray-50/40 dark:bg-gray-900/20" : ""
+                  }`}
                 >
                   <td className={`${tdClass} font-mono text-xs text-gray-500`}>
                     {ent.id}
                   </td>
                   <td
-                    className={`${tdClass} font-semibold text-gray-900 dark:text-white`}
+                    className={`${tdClass} max-w-[180px] truncate font-semibold text-gray-900 dark:text-white`}
+                    title={ent.enterprise}
                   >
                     {ent.enterprise}
                   </td>
-                  <td className={`${tdClass} text-gray-500`}>
+                  <td
+                    className={`${tdClass} max-w-[160px] truncate text-gray-500`}
+                    title={ent.orgName || ent.orgId}
+                  >
                     {ent.orgName || ent.orgId}
                   </td>
                   <td className={tdClass}>
@@ -432,45 +444,47 @@ export default function EnterprisesPage() {
                       <Badge>{ent.isActive ? "Active" : "Inactive"}</Badge>
                     )}
                   </td>
-                  <td
-                    className={`${tdClass} whitespace-nowrap text-gray-600 dark:text-gray-300`}
-                  >
+                  <td className={`${tdClass} text-gray-600 dark:text-gray-300`}>
                     {formatDisplayDate(ent.start_date)}
                   </td>
-                  <td
-                    className={`${tdClass} whitespace-nowrap text-gray-600 dark:text-gray-300`}
-                  >
+                  <td className={`${tdClass} text-gray-600 dark:text-gray-300`}>
                     {formatDisplayDate(ent.expiry_date)}
                   </td>
-                  <td className={`${tdClass} whitespace-nowrap`}>
+                  <td className={tdClass}>
                     <ExpiryCell row={ent} />
                   </td>
-                  <td className={`${tdClass} whitespace-nowrap`}>
+                  <td className={tdClass}>
                     <WarningCell level={ent.warningLevel} />
                   </td>
-                  <td className={`${tdClass}`}>
-                    <div className="flex flex-wrap items-center gap-2">
+                  <td
+                    className={`${tdClass} sticky right-0 z-10 ${
+                      idx % 2 === 1
+                        ? "bg-gray-50/40 dark:bg-gray-900/20"
+                        : "bg-white dark:bg-gray-900/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-end gap-1">
                       {canManageApplications && (
-                        <Tooltip content="Add application">
+                        <Tooltip content="Application">
                           <Button
                             variant="secondary"
-                            className="!px-3 !py-1.5"
+                            className={actionBtnClass}
                             onClick={() => handleAddApplication(ent)}
+                            aria-label="Application"
                           >
-                            <span className="text-xs font-medium">
-                              Application
-                            </span>
+                            <Database className="h-3.5 w-3.5" />
                           </Button>
                         </Tooltip>
                       )}
                       {canManageUsersForEnt(ent) && (
-                        <Tooltip content="Create user">
+                        <Tooltip content="Users">
                           <Button
                             variant="secondary"
-                            className="!px-3 !py-1.5"
+                            className={actionBtnClass}
                             onClick={() => openUsers(ent)}
+                            aria-label="Users"
                           >
-                            <span className="text-xs font-medium">Users</span>
+                            <Users className="h-3.5 w-3.5" />
                           </Button>
                         </Tooltip>
                       )}
@@ -478,24 +492,28 @@ export default function EnterprisesPage() {
                         <Tooltip content="Sync">
                           <Button
                             variant="secondary"
-                            className="!px-3 !py-1.5"
+                            className={actionBtnClass}
                             onClick={() => syncHotel(ent)}
+                            aria-label="Sync"
                           >
                             <RefreshCw className="h-3.5 w-3.5" />
                           </Button>
                         </Tooltip>
                       )}
                       {canManageEnterprises && (
-                        <Tooltip content="Set expiry">
+                        <Tooltip content="Expiry">
                           <Button
                             variant="secondary"
-                            className="!px-3 !py-1.5"
+                            className={actionBtnClass}
                             onClick={() => {
                               setExpiryTarget(ent);
                               setExpiryDate(ent.expiry_date || "");
                             }}
+                            aria-label="Expiry"
                           >
-                            <span className="text-xs font-medium">Expiry</span>
+                            <span className="text-[10px] font-bold uppercase tracking-wide">
+                              Exp
+                            </span>
                           </Button>
                         </Tooltip>
                       )}
@@ -503,8 +521,9 @@ export default function EnterprisesPage() {
                         <Tooltip content="Delete">
                           <Button
                             variant="danger"
-                            className="!px-2 !py-1.5"
+                            className={actionBtnClass}
                             onClick={() => setDeleting(ent)}
+                            aria-label="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

@@ -76,7 +76,7 @@ export default function ApplicationForm({
           <select className={fieldClass} {...register("enterpriseId")}>
             <option value="">Select enterprise</option>
             {enterprises.map((e) => (
-              <option key={e.id} value={e.id}>
+              <option key={e.id} value={String(e.id)}>
                 {e.enterprise}
               </option>
             ))}
@@ -89,7 +89,11 @@ export default function ApplicationForm({
         </label>
         <label className="space-y-1 text-sm">
           DB Host
-          <input className={fieldClass} {...register("dbHost")} />
+          <input
+            className={fieldClass}
+            placeholder="127.0.0.1 if Hotel POS is on the same server"
+            {...register("dbHost")}
+          />
           {errors.dbHost ? (
             <span className="text-xs text-coral">{errors.dbHost.message}</span>
           ) : null}

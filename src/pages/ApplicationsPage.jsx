@@ -17,6 +17,7 @@ import { Card, CardTitle } from "../components/ui/Card.jsx";
 import Modal from "../components/ui/Modal.jsx";
 import OrgSelectWarning from "../components/ui/OrgSelectWarning.jsx";
 import StatusDot from "../components/ui/StatusDot.jsx";
+import Tooltip from "../components/ui/Tooltip.jsx";
 import { useApplications } from "../hooks/useApplications.js";
 import { usePermissions } from "../hooks/usePermissions.js";
 import { useOrgStore } from "../store/org.store.js";
@@ -40,14 +41,60 @@ export default function ApplicationsPage() {
   const [enterprises, setEnterprises] = useState([]);
 
   useEffect(() => {
-    if (activeOrgId) {
-      listEnterprises(activeOrgId)
-        .then(setEnterprises)
-        .catch(() => setEnterprises([]));
-    } else {
-      setEnterprises([]);
+    const orgForList = editing?.orgId || activeOrgId;
+    if (!orgForList) {
+      if (editing?.enterpriseId) {
+        setEnterprises([
+          {
+            id: editing.enterpriseId,
+            enterprise:
+              editing.enterpriseName || `Enterprise #${editing.enterpriseId}`,
+          },
+        ]);
+      } else {
+        setEnterprises([]);
+      }
+      return;
     }
-  }, [activeOrgId]);
+
+    listEnterprises(orgForList)
+      .then((list) => {
+        if (editing?.enterpriseId) {
+          const id = Number(editing.enterpriseId);
+          if (!list.some((e) => Number(e.id) === id)) {
+            return [
+              ...list,
+              {
+                id,
+                enterprise:
+                  editing.enterpriseName || `Enterprise #${id}`,
+              },
+            ];
+          }
+        }
+        return list;
+      })
+      .then(setEnterprises)
+      .catch(() => {
+        if (editing?.enterpriseId) {
+          setEnterprises([
+            {
+              id: editing.enterpriseId,
+              enterprise:
+                editing.enterpriseName || `Enterprise #${editing.enterpriseId}`,
+            },
+          ]);
+        } else {
+          setEnterprises([]);
+        }
+      });
+  }, [
+    activeOrgId,
+    editing?.orgId,
+    editing?.id,
+    editing?.enterpriseId,
+    editing?.enterpriseName,
+  ]);
 
   useEffect(() => {
     if (searchParams.get("add") === "1" && activeOrgId) {
@@ -110,15 +157,16 @@ export default function ApplicationsPage() {
           )}
         </div>
         {canManageApplications && (
-          <Button
-            onClick={() =>
-              setEditing({ enterpriseId: activeEnterpriseId || undefined })
-            }
-            disabled={!activeOrgId}
-            title={!activeOrgId ? "Select an organisation first" : ""}
-          >
-            <Database className="h-4 w-4" /> Add Application
-          </Button>
+          <Tooltip content="Add">
+            <Button
+              onClick={() =>
+                setEditing({ enterpriseId: activeEnterpriseId || undefined })
+              }
+              disabled={!activeOrgId}
+            >
+              <Database className="h-4 w-4" /> Add Application
+            </Button>
+          </Tooltip>
         )}
       </div>
 
@@ -184,43 +232,51 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="flex flex-wrap gap-2 py-2">
                     {canManageApplications && (
-                      <Button variant="secondary" onClick={() => setEditing(app)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <Tooltip content="Edit">
+                        <Button variant="secondary" onClick={() => setEditing(app)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
                     )}
-                    <Button
-                      variant="secondary"
-                      onClick={async () => {
-                        try {
-                          await testConnection(app.id);
-                          toast.success("Connection successful", {
-                            icon: <Check />,
-                          });
-                        } catch (error) {
-                          toast.error(
-                            error.response?.data?.error || "Connection failed",
-                            { icon: <X /> },
-                          );
-                        }
-                      }}
-                    >
-                      Test
-                    </Button>
-                    {canTriggerBackup && (
+                    <Tooltip content="Test">
                       <Button
                         variant="secondary"
                         onClick={async () => {
-                          await backupNow(app.id);
-                          toast.success("Backup enqueued");
+                          try {
+                            await testConnection(app.id);
+                            toast.success("Connection successful", {
+                              icon: <Check />,
+                            });
+                          } catch (error) {
+                            toast.error(
+                              error.response?.data?.error || "Connection failed",
+                              { icon: <X /> },
+                            );
+                          }
                         }}
                       >
-                        <Play className="h-4 w-4" />
+                        Test
                       </Button>
+                    </Tooltip>
+                    {canTriggerBackup && (
+                      <Tooltip content="Backup">
+                        <Button
+                          variant="secondary"
+                          onClick={async () => {
+                            await backupNow(app.id);
+                            toast.success("Backup enqueued");
+                          }}
+                        >
+                          <Play className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
                     )}
                     {canManageApplications && (
-                      <Button variant="danger" onClick={() => setDeleting(app)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Tooltip content="Delete">
+                        <Button variant="danger" onClick={() => setDeleting(app)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </Tooltip>
                     )}
                   </td>
                 </tr>
