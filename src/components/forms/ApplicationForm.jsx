@@ -91,7 +91,7 @@ export default function ApplicationForm({
           DB Host
           <input
             className={fieldClass}
-            placeholder="127.0.0.1 if Hotel POS is on the same server"
+            placeholder="127.0.0.1"
             {...register("dbHost")}
           />
           {errors.dbHost ? (
