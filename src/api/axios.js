@@ -8,6 +8,15 @@ const api = axios.create({
   timeout: 30000
 });
 
+// Queue for parallel requests that arrive while a refresh is in progress
+let isRefreshing = false;
+let queue = [];
+
+const processQueue = (error, token = null) => {
+  queue.forEach(({ resolve, reject }) => error ? reject(error) : resolve(token));
+  queue = [];
+};
+
 function clearSession() {
   useAuthStore.getState().logout();
   useOrgStore.getState().clearOrg();
@@ -40,15 +49,40 @@ api.interceptors.response.use(
     }
 
     if (status === 401 && store.refreshToken && !original._retry) {
+
+      // If already refreshing, hold this request in the queue
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          queue.push({ resolve, reject });
+        }).then((token) => {
+          original.headers.Authorization = `Bearer ${token}`;
+          return api(original);
+        }).catch((err) => Promise.reject(err));
+      }
+
       original._retry = true;
+      isRefreshing = true;
+
       try {
-        const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken: store.refreshToken });
-        store.setAccessToken(response.data.data.accessToken);
-        original.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+        const response = await axios.post(
+          `${api.defaults.baseURL}/auth/refresh`,
+          { refreshToken: store.refreshToken }
+        );
+        const newToken = response.data.data.accessToken;
+
+        store.setAccessToken(newToken);
+        processQueue(null, newToken);
+
+        original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
+
       } catch (refreshError) {
+        processQueue(refreshError, null);
         clearSession();
         return Promise.reject(refreshError);
+
+      } finally {
+        isRefreshing = false;
       }
     }
 
